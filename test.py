@@ -1,8 +1,10 @@
-from Lane import Lane
+from stca.Lane import Lane
 
+# Lane parameters
 vmax = 10
 p = 0
 
+# Initial conditions
 # 00010011 01011000
 initial_conditions = list()
 initial_conditions.append(None)
