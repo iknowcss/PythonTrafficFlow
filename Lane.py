@@ -26,6 +26,9 @@ class Lane:
 	
 	def __move_cars(self):
 		print "TODO: implement Lane#__move_cars()"
+		
+	def __remove_last_car(self):
+		print "TODO: implement Lane#__remove_last_car()"
 	
 	# Public methods
 	def step(self):
