@@ -20,7 +20,7 @@ class Car:
 		print "TODO: implement Car#get_velocity()"
 		
 	def get_position(self):
-		r = numpy.random.random() # a random value "r" where 0.0 ≤ r < 1.0
+		r = numpy.random.random() # a random value "r" where 0.0 <= r < 1.0
 		print "TODO: implement Car#get_position()"
 		
 	def get_next_car(self):
