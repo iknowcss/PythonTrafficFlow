@@ -2,10 +2,12 @@ import numpy
 class Car:
 	# Constructor
 	def __init__(self,position,velocity,vmax,p,lane_bit_state_ref):
-		self.__position = position
-		self.__velocity = velocity
 		self.__vmax = vmax
 		self.__p = p
+		self.__g = 0
+		self.__velocity = velocity
+		self.__position = position
+		self.__next_car_ref = None
 		self.__lane_bit_state_ref = lane_bit_state_ref
 		
 	# Private methods
