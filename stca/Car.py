@@ -12,27 +12,27 @@ class Car:
 		
 	# Private methods
 	def __do_slow_randomly(self):
-		print "TODO: implement Car#__do_slow_randomly()"
+		"""TODO: implement Car#__do_slow_randomly()"""
 		
 	def __calc_new_g(self):
-		print "TODO: implement Car#__calc_new_g()"
-	
+		"""TODO: implement Car#__calc_new_g()"""
+
 	# Public methods
 	def get_velocity(self):
-		print "TODO: implement Car#get_velocity()"
-		
+		"""TODO: implement Car#get_velocity()"""
+
 	def get_position(self):
 		r = numpy.random.random() # a random value "r" where 0.0 <= r < 1.0
-		print "TODO: implement Car#get_position()"
-		
+		"""TODO: implement Car#get_position()"""
+
 	def get_next_car(self):
-		print "TODO: implement Car#get_next_car()"
-		
+		"""TODO: implement Car#get_next_car()"""
+
 	def set_next_car(self,car):
-		print "TODO: implement Car#set_next_car(car)"
-		
+		"""#TODO: implement Car#set_next_car(car)"""
+
 	def calc_new_velocity(self):
-		print "TODO: implement Car#calc_new_velocity()"
-		
+		"""#TODO: implement Car#calc_new_velocity()"""
+
 	def move(self):
-		print "TODO: implement Car#move()"
+		"""#TODO: implement Car#move()"""

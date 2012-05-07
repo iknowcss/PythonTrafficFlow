@@ -22,20 +22,21 @@ class Lane:
 	
 	# Private methods
 	def __calc_new_velocities(self):
-		print "TODO: implement Lane#__calc_new_velocities()"
+		"""TODO: implement Lane#__calc_new_velocities()"""
 	
 	def __move_cars(self):
-		print "TODO: implement Lane#__move_cars()"
+		"""TODO: implement Lane#__move_cars()"""
 		
 	def __remove_last_car(self):
-		print "TODO: implement Lane#__remove_last_car()"
+		"""TODO: implement Lane#__remove_last_car()"""
 	
 	# Public methods
 	def step(self):
-		print "TODO: implement Lane#step()"
+		"""TODO: implement Lane#step()"""
+		return self.get_lane_bit_state()
 	
 	def get_lane_bit_state(self):
 		return list(self.__lane_bit_state)
 	
 	def get_lane_velocity_state(self):
-		print "TODO: implement Lane#get_lane_velocity_state()"
+		"""TODO: implement Lane#get_lane_velocity_state()"""
