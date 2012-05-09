@@ -16,6 +16,7 @@ class Car:
 		
 	def __calc_new_g(self):
 		"""TODO: implement Car#__calc_new_g()"""
+		self.__g = self.__next_car_ref.__position - self.__position
 
 	# Public methods
 	def get_velocity(self):
@@ -23,12 +24,16 @@ class Car:
 
 	def get_position(self):
 		"""TODO: implement Car#get_position()"""
+		return self.__position
 
 	def get_next_car(self):
 		"""TODO: implement Car#get_next_car()"""
+		return self.__next_car_ref
 
 	def set_next_car(self,car):
 		"""#TODO: implement Car#set_next_car(car)"""
+		self.__next_car_ref = car
+		
 
 	def calc_new_velocity(self):
 		"""#TODO: implement Car#calc_new_velocity()"""
