@@ -25,7 +25,10 @@ class Car(object):
             
     def calc_new_g(self):
         """calculates new distance between obejct and next object"""
-        self.g = self.next_car_ref.position - self.position - 1
+        if self.next_car_ref is not None:
+            self.g = self.next_car_ref.position - self.position - 1
+        else:
+            self.g = len(lane_bit_state_ref) - self.position - 1
         
     def get_velocity(self):
         """returns velocity of object"""
