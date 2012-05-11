@@ -37,14 +37,13 @@ class Lane:
 	
 	def get_lane_bit_state(self):
 		return list(self.__lane_bit_state)
-	
-	def get_lane_velocity_state(self):   #not sure if I am supposed to incorporate self anywhere else in function
- 		lcl = []  #lane condition list is empty to start
-		ci = 0   #Specify this so that below we start by pulling the zeroth car from the car list (the first car)
-		for bit_state in __lane_bit_state:
+        
+        def get_lane_velocity_state(self):
+                lcl = []  #lane condition list is empty to start
+                ci = 0   #Specify this so that below we start by pulling the zeroth car from the car list (the first car)
+                for bit_state in __lane_bit_state:
                         if bit_state == True:
                                 lcl.append(__cars[ci].get_velocity())  #if true, we add the cars velocity to the list
-                                # do I need to put get_veloctity(self) in the line above??
                                 ci += 1  #add so that next time it selects the next car in the list of cars
                         else:
                                 lcl.append(None)  #if false, we add None
