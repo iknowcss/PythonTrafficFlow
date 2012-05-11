@@ -1,4 +1,6 @@
 import numpy
+import sys
+
 class Car:
 	# Constructor
 	def __init__(self,position,velocity,vmax,p,lane_bit_state_ref):
@@ -15,8 +17,10 @@ class Car:
 		"""TODO: implement Car#__do_slow_randomly()"""
 		
 	def __calc_new_g(self):
-		"""TODO: implement Car#__calc_new_g()"""
-		self.__g = self.__next_car_ref.__position - self.__position
+		if self.__next_car_ref is not None:
+			self.__g = self.__next_car_ref.__position - self.__position
+		else:
+			self.__g = sys.maxint
 
 	# Public methods
 	def get_velocity(self):
