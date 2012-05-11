@@ -31,11 +31,9 @@ class Car:
 		return self.__position
 
 	def get_next_car(self):
-		"""TODO: implement Car#get_next_car()"""
 		return self.__next_car_ref
 
 	def set_next_car(self,car):
-		"""#TODO: implement Car#set_next_car(car)"""
 		self.__next_car_ref = car
 		
 
