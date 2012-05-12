@@ -24,7 +24,7 @@ class Car:
 
 	# Public methods
 	def get_velocity(self):
-		"""TODO: implement Car#get_velocity()"""
+		return self.__velocity
 
 	def get_position(self):
 		"""TODO: implement Car#get_position()"""
