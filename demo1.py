@@ -1,5 +1,6 @@
 from ui.LaneDisplay import LaneDisplay
-from stca.Lane import Lane
+from stca.Lane import Lane as STCALane
+from rule184.Lane import Lane as CALane
 
 ilc = [\
 	None,\
@@ -13,5 +14,11 @@ ilc = [\
 	None,\
 	1\
 ]
-lane = Lane(1,0,ilc)
-ld = LaneDisplay(lane)
+#lane = STCALane(1,0,ilc)
+#ld = LaneDisplay(lane)
+#ld.step()
+
+initial_bit_state = "001000100001100100001010011000111"
+#initial_bit_state = "0000000000000000000000000000001000000000000000000000000000000"
+ca_lane = CALane(initial_bit_state)
+ca_lane_display = LaneDisplay(ca_lane,50)
