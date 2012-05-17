@@ -2,6 +2,8 @@ from Tkinter import *
 from functools import partial
 
 class LaneControl:
+	ic_row_count = 10
+
 	# Initalization
 	def __init__(self):
 		print "Initalize LaneControl window"
@@ -100,14 +102,18 @@ class LaneControl:
 		self.__ic_frame.pack(fill=BOTH,padx=10,pady=5)
 		self.__populate_ic_frame()
 	def __populate_ic_frame(self):
-		Button(self.__ic_frame,
-			bitmap="gray12",
-			bd=0,
-			bg="#ff00ff",
-			relief=FLAT,
-			padx=0,pady=0,
-			width=10,height=10
-		).pack()
+		for j in range(3):
+			f = Frame(self.__ic_frame)
+			f.pack()
+			for i in range(LaneControl.ic_row_count):
+				Button(f,
+					text=i + LaneControl.ic_row_count*j,
+					font="Courier",
+					bd=0,
+					bg="#ff00ff",
+					relief=FLAT,
+					width=1
+				).grid(row=j,column=i)
 	
 	# UI Util
 	def __build_editable_input(self,parent,tv,handler,width=5,justify=RIGHT):
