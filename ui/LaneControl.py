@@ -35,7 +35,7 @@ class LaneControl:
 			self.__input_lane_size,
 			self.__validate_lane_size
 		)
-		ei.grid(row=0,column=1,pady=5)
+		ei.grid(row=0,column=1)
 		self.__parameter_inputs.append(ei)
 		
 		# Max Velocity
@@ -46,7 +46,7 @@ class LaneControl:
 			self.__input_max_velocity,
 			self.__validate_max_velocity
 		)
-		ei.grid(row=1,column=1,pady=5)
+		ei.grid(row=1,column=1)
 		self.__parameter_inputs.append(ei)
 		
 		# Slowing Probability
@@ -57,7 +57,7 @@ class LaneControl:
 			self.__input_slowing_prob,
 			self.__validate_slowing_prob
 		)
-		ei.grid(row=0,column=3,pady=5)
+		ei.grid(row=0,column=3)
 		self.__parameter_inputs.append(ei)
 		
 		# Apply Parameters
@@ -101,8 +101,12 @@ class LaneControl:
 		self.__populate_ic_frame()
 	def __populate_ic_frame(self):
 		Button(self.__ic_frame,
-			text="Test",
-			bg="#ff00ff"
+			bitmap="gray12",
+			bd=0,
+			bg="#ff00ff",
+			relief=FLAT,
+			padx=0,pady=0,
+			width=10,height=10
 		).pack()
 	
 	# UI Util
@@ -118,14 +122,16 @@ class LaneControl:
 		# Up button
 		Button(f,
 			text=u"\u25B2",font=("Arial",7),
-			width=1,height=1,relief=FLAT,
+			width=2,height=1,relief=FLAT,bd=0,
+			padx=0,pady=0,
 			command=partial(self.__increment_textvariable,tv,1)
 		).grid(row=0,column=1)
 		
 		# Down button
 		Button(f,
 			text=u"\u25BC",font=("Arial",7),
-			width=1,height=1,relief=FLAT,
+			width=2,height=1,relief=FLAT,bd=0,
+			padx=0,pady=0,
 			command=partial(self.__increment_textvariable,tv,-1)
 		).grid(row=1,column=1)
 		
