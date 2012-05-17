@@ -23,11 +23,11 @@ class Lane:
 	# Private methods
 	def __calc_new_velocities(self):
                 for car in __cars:
-                        calc_new_velocity()
+                        car.calc_new_velocity()
 	
 	def __move_cars(self):
 		for car in __cars:
-                        move()
+                        car.move()
 		
 	def __remove_last_car(self):
 		for car in __cars:
