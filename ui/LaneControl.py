@@ -1,173 +1,231 @@
 from Tkinter import *
-from functools import partial
+import time
+import math
+from threading import Thread
 
 class LaneControl:
-	ic_row_count = 10
-
-	# Initalization
-	def __init__(self):
-		print "Initalize LaneControl window"
-		self.__root = Tk()
+	default_car_size = 50
+	max_canvas_size = 800
+	car_color = "#42A866"
+	canvas_color = "#ffffff"
+	round_level = 3
+	round_f = "%."+str(round_level)+"f"
+	default_sleep_time = 0.1
+	def __init__(self,lane_loader_ref,parameters):
+		print
+		print "Initalizing LaneControl Toplevel"
+		self.__top = Toplevel()
+		self.__top.protocol("WM_DELETE_WINDOW", self.__close_window_callback)
 		
-		# Set the parameters for the first time
-		self.__reset_parameters()
+		print "Initalizing LaneControl variables"
+		self.__original_parameters = parameters
+		self.__lane_loader_ref = lane_loader_ref
+		self.__lane = self.__build_lane_object(parameters)
+		self.__lane_size = len(self.__lane.get_lane_bit_state())
+		self.__blank_rectangles = None
+		self.__car_rectangles = None
+		self.__car_size = LaneControl.default_car_size
+		self.__animation_canvas = None
+		self.__animation_playing = False
+		self.__play_pause_button = None
+		self.__playing_disable_buttons = []
+		self.__lane_density = self.__lane.get_lane_density()
+		self.__lane_density_label = None
+		self.__lane_avg_vel_label = None
+		self.__lane_current_label = None
+		self.__step_sleep_time = LaneControl.default_sleep_time
 		
-		# Build the interface
-		self.__build_parameter_frame()
-		self.__build_ic_frame()
+		print "Disabling LaneLoader"
+		self.__lane_loader_ref.disable_controls()
 		
-		print "Starting mainloop..."
-		self.__root.mainloop()
+		print "Preparing animation canvas"
+		self.__build_animation_canvas()
+		
+		print "Preparing status frame"
+		self.__build_status_frame()
 	
-	# Simulation Parameter Functions
-	def __build_parameter_frame(self):
-		self.__parameter_frame = LabelFrame(self.__root,
-			text="Simulation Parameters"
+	def __build_lane_object(self,parameters):
+		print "Building lane with the following parameters:"
+		
+		if parameters.is_simple_ca:
+			if hasattr(parameters,"max_velocity"):
+				del parameters.max_velocity
+			if hasattr(parameters,"slowing_probability"):
+				del parameters.slowing_probability
+			parameters.print_attributes(" - ")
+			return parameters.simulation_class(
+				parameters.initial_conditions
+			)
+		else:
+			parameters.print_attributes(" - ")
+			return parameters.simulation_class(
+				parameters.max_velocity,
+				parameters.slowing_probability,
+				parameters.initial_conditions
+			)
+	def __build_animation_canvas(self):
+		# Frame
+		lf = LabelFrame(
+			self.__top,
+			text="Simulation"
 		)
-		self.__parameter_frame.pack(fill=BOTH,padx=10,pady=5)
-		self.__populate_parameter_frame()
-	def __populate_parameter_frame(self):
-		self.__parameter_inputs = []
+		
+		# Canvas
+		canvas_width = self.__car_size * self.__lane_size
+		canvas_height = self.__car_size
+		
+		# Ensure Canvas dimensions
+		if canvas_width > LaneControl.max_canvas_size:
+			ratio = float(LaneControl.max_canvas_size) / canvas_width
+			ratio = math.floor(self.__car_size * ratio) / float(self.__car_size)
+			self.__car_size = int(ratio * self.__car_size)
+			canvas_width = self.__car_size * self.__lane_size
+			canvas_height = self.__car_size
+			
+		
+		self.__animation_canvas = Canvas(
+			lf,
+			width=canvas_width,
+			height=canvas_height + 1
+		)
+		self.__animation_canvas.pack(fill=BOTH,padx=5,pady=5)
+		
+		# Cars
+		self.__draw_bit_state()
+		
+		# Player controls
+		pcframe = Frame(lf)
+		
+		# Rewind
+		b = Button(pcframe,text=u"\u21BA",font="Courier",command=self.__rewind_animation)
+		b.pack(side=LEFT)
+		self.__playing_disable_buttons.append(b)
+		
+		# Play/Pause
+		b = Button(pcframe,font="Courier")
+		b.pack(side=LEFT)
+		self.__play_pause_button = b
+		
+		# Step
+		b = Button(pcframe,text=u"\u003E",font="Courier",command=self.__step_animation)
+		b.pack(side=LEFT)
+		self.__playing_disable_buttons.append(b)
+		
+		pcframe.pack()
+		self.__pause_animation()
+		
+		# Final pack
+		lf.pack(fill=X,ipady=5)
+	def __rewind_animation(self):
+		self.__lane = self.__build_lane_object(self.__original_parameters)
+		self.__draw_bit_state()
+		self.__update_simulation_status(True)
+	def __play_animation(self):
+		self.__animation_playing = True
+		self.__play_pause_button.config(text=u"\u25A3",command=self.__pause_animation)
+		for b in self.__playing_disable_buttons:
+			b.config(state=DISABLED)
+		Thread(target=self.__play_animation_thread).start()
+	def __play_animation_thread(self):
+		while True:
+			if not self.__animation_playing:
+				break
+			self.__step_animation()
+			time.sleep(self.__step_sleep_time)
+	def __pause_animation(self):
+		self.__animation_playing = False
+		self.__play_pause_button.config(text=u"\u25BA",command=self.__play_animation)
+		for b in self.__playing_disable_buttons:
+			b.config(state=NORMAL)
+	def __step_animation(self):
+		self.__draw_bit_state(self.__lane.step())
+		self.__update_simulation_status()
+	def __draw_bit_state(self,lbs=None):
+		# Get the lane bit state
+		if lbs is None:
+			lbs = self.__lane.get_lane_bit_state()
+		
+		# Do we need to re-add the rectangles?
+		if self.__blank_rectangles is None or self.__car_rectangles is None:
+			self.__blank_rectangles = []
+			self.__car_rectangles = []
+			for i in range(self.__lane_size):
+				state = lbs[i]
+				color = [LaneControl.canvas_color,LaneControl.car_color][state]
+				r = self.__animation_canvas.create_rectangle(
+					0, 1,
+					self.__car_size, self.__car_size,
+					fill=color
+				)
+				if state is True:
+					self.__car_rectangles.append(r)
+				else:
+					self.__blank_rectangles.append(r)
+		
+		bri = 0
+		cri = 0
+		for i in range(self.__lane_size):
+			state = lbs[i]
+			r = None
+			if state is True:
+				r = self.__car_rectangles[cri]
+				cri += 1
+			else:
+				r = self.__blank_rectangles[bri]
+				bri += 1
+				
+			x = self.__car_size * i
+			xoffset = [0,1][i==0]
+			self.__animation_canvas.coords(r,
+				x, 1,
+				x + self.__car_size, self.__car_size
+			)
+	def __update_simulation_status(self,empty=False):
+		if empty:
+			self.__lane_density_label.config(text=
+				(LaneControl.round_f % round(self.__lane_density,LaneControl.round_level)) +
+				" cars/space"
+			)
+			self.__lane_avg_vel_label.config(text="[unknown]")
+			self.__lane_current_label.config(text="[unknown]")
+		else:
+			vel = self.__lane.get_average_velocity()
+			current = vel * self.__lane_density
+			self.__lane_avg_vel_label.config(text=
+				(LaneControl.round_f % round(vel,LaneControl.round_level)) + 
+				" spaces/tick"
+			)
+			self.__lane_current_label.config(text=
+				(LaneControl.round_f % round(current,LaneControl.round_level)) +
+				" cars/tick"
+			)
+	def __build_status_frame(self):
+		# Frame
+		lf = LabelFrame(
+			self.__top,
+			text="Status"
+		)
+		
+		# Lane Density
+		Label(lf,text="Lane Density:").grid(row=0,column=0,padx=10,sticky=W)
+		self.__lane_density_label = Label(lf)
+		self.__lane_density_label.grid(row=0,column=1,padx=10,sticky=W)
+		
+		# Average Velocity
+		Label(lf,text="Average Velocity:").grid(row=1,column=0,padx=10,sticky=W)
+		self.__lane_avg_vel_label = Label(lf)
+		self.__lane_avg_vel_label.grid(row=1,column=1,padx=10,sticky=W)
+		
+		# Current
+		Label(lf,text="Current:").grid(row=2,column=0,padx=10,sticky=W)
+		self.__lane_current_label = Label(lf)
+		self.__lane_current_label.grid(row=2,column=1,padx=10,sticky=W)
+		
+		lf.pack(fill=X,pady=5,ipadx=10)
+		
+		self.__update_simulation_status(True)
 	
-		# Lane Size
-		l = Label(self.__parameter_frame,text = "Lane Size",padx=10)
-		l.grid(row=0,column=0,sticky=W)
-		ei = self.__build_editable_input(
-			self.__parameter_frame,
-			self.__input_lane_size,
-			self.__validate_lane_size
-		)
-		ei.grid(row=0,column=1)
-		self.__parameter_inputs.append(ei)
-		
-		# Max Velocity
-		l = Label(self.__parameter_frame,text = "Max Velocity",padx=10)
-		l.grid(row=1,column=0,sticky=W)
-		ei = self.__build_editable_input(
-			self.__parameter_frame,
-			self.__input_max_velocity,
-			self.__validate_max_velocity
-		)
-		ei.grid(row=1,column=1)
-		self.__parameter_inputs.append(ei)
-		
-		# Slowing Probability
-		l = Label(self.__parameter_frame,text="Slowing Probability\n(percentage)",padx=10,justify=LEFT)
-		l.grid(row=0,column=2,sticky=W)
-		ei = self.__build_editable_input(
-			self.__parameter_frame,
-			self.__input_slowing_prob,
-			self.__validate_slowing_prob
-		)
-		ei.grid(row=0,column=3)
-		self.__parameter_inputs.append(ei)
-		
-		# Apply Parameters
-		self.__button_apply_parameters = Button(self.__parameter_frame,
-			text="Apply Parameters",
-			command=self.__apply_parameters,
-			width=15
-		)
-		self.__button_apply_parameters.grid(row=1,column=2,columnspan=2)
-	def __apply_parameters(self):
-		self.__button_apply_parameters.configure(
-			text="Edit Parameters",
-			command=self.__edit_parameters
-		)
-		self.__disable_parameter_inputs()
-	def __edit_parameters(self):
-		self.__button_apply_parameters.configure(
-			text="Apply Parameters",
-			command=self.__apply_parameters
-		)
-		self.__enable_parameter_inputs()
-	def __reset_parameters(self):
-		self.__input_lane_size = StringVar(value=10)
-		self.__input_max_velocity = StringVar(value=1)
-		self.__input_slowing_prob = StringVar(value=0)
-	def __enable_parameter_inputs(self):
-		for pi in self.__parameter_inputs:
-			for c in pi.winfo_children():
-				c.config(state=NORMAL)
-	def __disable_parameter_inputs(self):
-		for pi in self.__parameter_inputs:
-			for c in pi.winfo_children():
-				c.config(state=DISABLED)
-	
-	# Initial Condition Functions
-	def __build_ic_frame(self):
-		self.__ic_frame = LabelFrame(self.__root,
-			text="Initial Conditions"
-		)
-		self.__ic_frame.pack(fill=BOTH,padx=10,pady=5)
-		self.__populate_ic_frame()
-	def __populate_ic_frame(self):
-		for j in range(3):
-			f = Frame(self.__ic_frame)
-			f.pack()
-			for i in range(LaneControl.ic_row_count):
-				Button(f,
-					text=i + LaneControl.ic_row_count*j,
-					font="Courier",
-					bd=0,
-					bg="#ff00ff",
-					relief=FLAT,
-					width=1
-				).grid(row=j,column=i)
-	
-	# UI Util
-	def __build_editable_input(self,parent,tv,handler,width=5,justify=RIGHT):
-		# Prepare frame
-		f = Frame(parent)
-		e = Entry(f,textvariable=tv,width=width,justify=justify)
-		e.grid(row=0,column=0,rowspan=2)
-		
-		# Ensure valid value
-		tv.trace("w",lambda name,index,mode,tv=tv:handler(tv))
-		
-		# Up button
-		Button(f,
-			text=u"\u25B2",font=("Arial",7),
-			width=2,height=1,relief=FLAT,bd=0,
-			padx=0,pady=0,
-			command=partial(self.__increment_textvariable,tv,1)
-		).grid(row=0,column=1)
-		
-		# Down button
-		Button(f,
-			text=u"\u25BC",font=("Arial",7),
-			width=2,height=1,relief=FLAT,bd=0,
-			padx=0,pady=0,
-			command=partial(self.__increment_textvariable,tv,-1)
-		).grid(row=1,column=1)
-		
-		return f
-	def __increment_textvariable(self,textvariable,ammount):
-		try:
-			textvariable.set(int(textvariable.get()) + ammount)
-		except:
-			textvariable.set(0)
-	
-	# Validation
-	def __validate_int(self,sv,min,max):
-		try:
-			cur = sv.get()
-			if len(cur) == 0:
-				return
-			cur = float(sv.get())
-			if cur - int(cur) != 0:
-				raise
-			if cur < min:
-				sv.set(min)
-			elif cur > max:
-				sv.set(max)
-		except:
-			sv.set(min)
-	def __validate_lane_size(self,sv):
-		self.__validate_int(sv,2,20)
-	def __validate_max_velocity(self,sv):
-		self.__validate_int(sv,1,1000)
-	def __validate_slowing_prob(self,sv):
-		self.__validate_int(sv,0,100)
-
-LaneControl()
+	def __close_window_callback(self):
+		self.__pause_animation()
+		self.__top.destroy()
+		self.__lane_loader_ref.enable_controls()
