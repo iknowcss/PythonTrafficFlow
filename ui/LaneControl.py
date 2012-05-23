@@ -8,6 +8,9 @@ class LaneControl:
 	max_canvas_size = 800
 	car_color = "#42A866"
 	canvas_color = "#ffffff"
+	round_level = 3
+	round_f = "%."+str(round_level)+"f"
+	default_sleep_time = 0.1
 	def __init__(self,lane_loader_ref,parameters):
 		print
 		print "Initalizing LaneControl Toplevel"
@@ -26,12 +29,20 @@ class LaneControl:
 		self.__animation_playing = False
 		self.__play_pause_button = None
 		self.__playing_disable_buttons = []
+		self.__lane_density = self.__lane.get_lane_density()
+		self.__lane_density_label = None
+		self.__lane_avg_vel_label = None
+		self.__lane_current_label = None
+		self.__step_sleep_time = LaneControl.default_sleep_time
 		
 		print "Disabling LaneLoader"
 		self.__lane_loader_ref.disable_controls()
 		
 		print "Preparing animation canvas"
 		self.__build_animation_canvas()
+		
+		print "Preparing status frame"
+		self.__build_status_frame()
 	
 	def __build_lane_object(self,parameters):
 		print "Building lane with the following parameters:"
@@ -104,10 +115,11 @@ class LaneControl:
 		self.__pause_animation()
 		
 		# Final pack
-		lf.pack(ipady=5)
+		lf.pack(fill=X,ipady=5)
 	def __rewind_animation(self):
 		self.__lane = self.__build_lane_object(self.__original_parameters)
 		self.__draw_bit_state()
+		self.__update_simulation_status(True)
 	def __play_animation(self):
 		self.__animation_playing = True
 		self.__play_pause_button.config(text=u"\u25A3",command=self.__pause_animation)
@@ -119,7 +131,7 @@ class LaneControl:
 			if not self.__animation_playing:
 				break
 			self.__step_animation()
-			time.sleep(0.1)
+			time.sleep(self.__step_sleep_time)
 	def __pause_animation(self):
 		self.__animation_playing = False
 		self.__play_pause_button.config(text=u"\u25BA",command=self.__play_animation)
@@ -127,6 +139,7 @@ class LaneControl:
 			b.config(state=NORMAL)
 	def __step_animation(self):
 		self.__draw_bit_state(self.__lane.step())
+		self.__update_simulation_status()
 	def __draw_bit_state(self,lbs=None):
 		# Get the lane bit state
 		if lbs is None:
@@ -164,10 +177,55 @@ class LaneControl:
 			x = self.__car_size * i
 			xoffset = [0,1][i==0]
 			self.__animation_canvas.coords(r,
-					x, 1,
-					x + self.__car_size, self.__car_size
+				x, 1,
+				x + self.__car_size, self.__car_size
 			)
-			
+	def __update_simulation_status(self,empty=False):
+		if empty:
+			self.__lane_density_label.config(text=
+				(LaneControl.round_f % round(self.__lane_density,LaneControl.round_level)) +
+				" cars/space"
+			)
+			self.__lane_avg_vel_label.config(text="[unknown]")
+			self.__lane_current_label.config(text="[unknown]")
+		else:
+			vel = self.__lane.get_average_velocity()
+			current = vel * self.__lane_density
+			self.__lane_avg_vel_label.config(text=
+				(LaneControl.round_f % round(vel,LaneControl.round_level)) + 
+				" spaces/tick"
+			)
+			self.__lane_current_label.config(text=
+				(LaneControl.round_f % round(current,LaneControl.round_level)) +
+				" cars/tick"
+			)
+	def __build_status_frame(self):
+		# Frame
+		lf = LabelFrame(
+			self.__top,
+			text="Status"
+		)
+		
+		# Lane Density
+		Label(lf,text="Lane Density:").grid(row=0,column=0,padx=10,sticky=W)
+		self.__lane_density_label = Label(lf)
+		self.__lane_density_label.grid(row=0,column=1,padx=10,sticky=W)
+		
+		# Average Velocity
+		Label(lf,text="Average Velocity:").grid(row=1,column=0,padx=10,sticky=W)
+		self.__lane_avg_vel_label = Label(lf)
+		self.__lane_avg_vel_label.grid(row=1,column=1,padx=10,sticky=W)
+		
+		# Current
+		Label(lf,text="Current:").grid(row=2,column=0,padx=10,sticky=W)
+		self.__lane_current_label = Label(lf)
+		self.__lane_current_label.grid(row=2,column=1,padx=10,sticky=W)
+		
+		lf.pack(fill=X,pady=5,ipadx=10)
+		
+		self.__update_simulation_status(True)
+	
 	def __close_window_callback(self):
+		self.__pause_animation()
 		self.__top.destroy()
 		self.__lane_loader_ref.enable_controls()
