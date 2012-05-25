@@ -4,7 +4,7 @@ Python Traffic Flow Project Plan
 Objective
 ---------
 
-To create a code that will allow the user to input the initial conditions with the GUI for the stca model and then display what happens.
+To create a code that will allow the user to input the initial conditions with the GUI for the stca model and then display what occurs in real time or time step by time step.
 
 ### Tasks
 
