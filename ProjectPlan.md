@@ -1,0 +1,13 @@
+Python Traffic Flow Project Plan
+================================
+
+Objective
+---------
+
+To create a code that will allow the user to input the initial conditions with the GUI for the stca model and then display what happens.
+
+### Tasks
+
+* Phil: Create car class
+* Taylor: Create lane class
+* Cody: GUI
