@@ -11,3 +11,8 @@ To create a code that will allow the user to input the initial conditions with t
 * Phil: Create car class
 * Taylor: Create lane class
 * Cody: GUI
+
+### Future Goals
+
+* Add code for other models
+* Add options to choose which model the user wants to use
