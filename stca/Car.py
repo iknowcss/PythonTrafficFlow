@@ -10,6 +10,7 @@ class Car(object):
         self.__vmax = vmax
         self.__p = p
         self.__lane_bit_state_ref = lane_bit_state_ref
+        self.__lane_length  = len(lane_bit_state_ref)
         self.__next_car_ref = None
         self.__g = 0
         
@@ -31,10 +32,12 @@ class Car(object):
             
     def __calc_new_g(self):
         """calculates new distance between obejct and next object"""
-        if self.__next_car_ref.__position < self.__position:
-            self.__g = self.__next_car_ref.__positon + len(lane_bit_state_ref) - self.__position - 1
+        if self.__next_car_ref is self:
+            self.__g = self.__lane_length - 1
+        elif self.__next_car_ref.get_position() < self.__position:
+            self.__g = self.__next_car_ref.get_position() + self.__lane_length - self.__position - 1
         else:
-            self.__g = self.__next_car_ref.__position - self.__position - 1
+            self.__g = self.__next_car_ref.get_position() - self.__position - 1
     
         
     ### Public Methods ###    
@@ -63,14 +66,20 @@ class Car(object):
         elif self.__velocity < self.__g and self.__velocity < self.__vmax:
             self.__velocity += 1
         if self.__velocity > 0:
-            if self.__do_slow_randomly == True:
+            if self.__do_slow_randomly() == True:
                 self.__velocity -= 1
             
     def move(self):
         """moves object in lane, returns True if car loops back to start of lane, returns False otherwise"""
-        self.__position = self.get_position() + self.get_velocity()
-        if self.__position > len(lane_bit_state_ref):
-            self.__position = self.__position % len(lane_bit_state_ref)
-            return True
+        self.__lane_bit_state_ref[self.__position] = False
+        new_pos = self.__position + self.__velocity
+        loop_required = False
+        if new_pos >= self.__lane_length:
+            new_pos %= self.__lane_length
+            loop_required = True
         else:
-            return False
+            loop_required = False
+    
+        self.__position = new_pos
+        self.__lane_bit_state_ref[new_pos] = True
+        return loop_required

@@ -110,6 +110,9 @@ class LaneLoader:
 class LaneParameters:
 	def __init__(self,sim_type_dict,json_dict):
 		self.initial_conditions = list(json_dict[u"initialConditions"])
+		
+		print "Initial conditions:",self.initial_conditions
+		
 		self.max_velocity = int(json_dict[u"maxVelocity"])
 		self.slowing_probability = float(json_dict[u"slowingProbability"])
 		self.is_simple_ca = False
@@ -126,6 +129,11 @@ class LaneParameters:
 			raise Exception("Could not load simulation type \"" + simulation_type_name + "\"")
 		
 		self.simulation_class = simulation_class
+		
+		for i in range(len(self.initial_conditions)):
+			ic = self.initial_conditions[i]
+			if type(ic) is bool:
+				self.initial_conditions[i] = [None,0][ic]
         
 	def print_attributes(self,prefix=""):
 		for attr in self.__dict__:

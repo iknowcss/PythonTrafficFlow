@@ -1,12 +1,15 @@
 from Tkinter import *
 import time
 import math
+import operator
 from threading import Thread
 
 class LaneControl:
 	default_car_size = 50
-	max_canvas_size = 800
-	car_color = "#42A866"
+	max_canvas_size = 1000
+	car_color_start = (250,70,70) #FA4646
+	car_color_end = (66,168,102) #42A866
+	car_color_head = (0,0,255) #0000FF
 	canvas_color = "#ffffff"
 	round_level = 3
 	round_f = "%."+str(round_level)+"f"
@@ -21,7 +24,10 @@ class LaneControl:
 		self.__original_parameters = parameters
 		self.__lane_loader_ref = lane_loader_ref
 		self.__lane = self.__build_lane_object(parameters)
-		self.__lane_size = len(self.__lane.get_lane_bit_state())
+		lbs = self.__lane.get_lane_bit_state()
+		
+		self.__lane_size = len(lbs)
+		self.__car_count = sum(map(int,lbs))
 		self.__blank_rectangles = None
 		self.__car_rectangles = None
 		self.__car_size = LaneControl.default_car_size
@@ -96,6 +102,15 @@ class LaneControl:
 		# Player controls
 		pcframe = Frame(lf)
 		
+		# Speed
+		speed = StringVar()
+		speeds = ["1 ticks/sec","5 ticks/sec","10 ticks/sec"]
+		speed.set(speeds[-1])
+		b = OptionMenu(pcframe,speed,*speeds,command=self.__set_animation_speed)
+		b.config(width=15,justify=RIGHT)
+		b.pack(side=LEFT)
+		self.__playing_disable_buttons.append(b)
+		
 		# Rewind
 		b = Button(pcframe,text=u"\u21BA",font="Courier",command=self.__rewind_animation)
 		b.pack(side=LEFT)
@@ -120,6 +135,10 @@ class LaneControl:
 		self.__lane = self.__build_lane_object(self.__original_parameters)
 		self.__draw_bit_state()
 		self.__update_simulation_status(True)
+	def __set_animation_speed(self,speed_text):
+		tps = int(speed_text[0:speed_text.index(" ")])
+		self.__step_sleep_time = 1.0 / tps
+		print self.__step_sleep_time
 	def __play_animation(self):
 		self.__animation_playing = True
 		self.__play_pause_button.config(text=u"\u25A3",command=self.__pause_animation)
@@ -149,9 +168,35 @@ class LaneControl:
 		if self.__blank_rectangles is None or self.__car_rectangles is None:
 			self.__blank_rectangles = []
 			self.__car_rectangles = []
+			self.__color_offset = 0
+			self.__first_car_pos = lbs.index(True)
+			
+			icolor = (
+				LaneControl.car_color_start[0],
+				LaneControl.car_color_start[1],
+				LaneControl.car_color_start[2]
+			)
+			dcolor = list(LaneControl.car_color_end)
+			for i in range(3):
+				dcolor[i] -= LaneControl.car_color_start[i]
+				dcolor[i] /= float(self.__car_count)
+				dcolor[i] = int(math.floor(dcolor[i]))
+			dcolor = tuple(dcolor)
+			
+			created_head = False
 			for i in range(self.__lane_size):
 				state = lbs[i]
-				color = [LaneControl.canvas_color,LaneControl.car_color][state]
+				color = None
+				if state is True:
+					color = "#%02x%02x%02x" % icolor
+					icolor = tuple(map(operator.add,icolor,dcolor))
+					if created_head is False:
+						print "Create Head rectangle"
+						color = "#%02x%02x%02x" % LaneControl.car_color_head
+						created_head = True
+				else:
+					color = LaneControl.canvas_color
+				
 				r = self.__animation_canvas.create_rectangle(
 					0, 1,
 					self.__car_size, self.__car_size,
@@ -162,13 +207,16 @@ class LaneControl:
 				else:
 					self.__blank_rectangles.append(r)
 		
+		if self.__first_car_pos - lbs.index(True) > 0:
+			self.__color_offset = (self.__color_offset + 1) % self.__car_count
 		bri = 0
 		cri = 0
+		cra = range(-self.__color_offset,len(self.__car_rectangles)-self.__color_offset)
 		for i in range(self.__lane_size):
 			state = lbs[i]
 			r = None
 			if state is True:
-				r = self.__car_rectangles[cri]
+				r = self.__car_rectangles[cra[cri]]
 				cri += 1
 			else:
 				r = self.__blank_rectangles[bri]
@@ -180,6 +228,7 @@ class LaneControl:
 				x, 1,
 				x + self.__car_size, self.__car_size
 			)
+		self.__first_car_pos = lbs.index(True)
 	def __update_simulation_status(self,empty=False):
 		if empty:
 			self.__lane_density_label.config(text=

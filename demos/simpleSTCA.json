@@ -1,6 +1,6 @@
 {
 	"simulationType": "STCA",
-	"maxVelocity": 1,
+	"maxVelocity": 2,
 	"slowingProbability": 0.0,
-	"initialConditions": [null,null,0,0,null,null]
+	"initialConditions": [0,0,null,null,null,null,null,null,null,null,null,null]
 }
