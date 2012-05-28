@@ -78,15 +78,12 @@ class LaneControl:
 		
 		# Canvas
 		canvas_width = self.__car_size * self.__lane_size
-		canvas_height = self.__car_size
-		
-		# Ensure Canvas dimensions
 		if canvas_width > LaneControl.max_canvas_size:
 			ratio = float(LaneControl.max_canvas_size) / canvas_width
 			ratio = math.floor(self.__car_size * ratio) / float(self.__car_size)
 			self.__car_size = int(ratio * self.__car_size)
-			canvas_width = self.__car_size * self.__lane_size
-			canvas_height = self.__car_size
+			canvas_width = self.__car_size * self.__lane_size + 2
+		canvas_height = self.__car_size * 2
 			
 		
 		self.__animation_canvas = Canvas(
@@ -193,6 +190,11 @@ class LaneControl:
 					if created_head is False:
 						print "Create Head rectangle"
 						color = "#%02x%02x%02x" % LaneControl.car_color_head
+						self.__car_peg = self.__animation_canvas.create_oval(
+							0, self.__car_size,
+							self.__car_size, 2 * self.__car_size,
+							fill="#000000"
+						)
 						created_head = True
 				else:
 					color = LaneControl.canvas_color
@@ -213,9 +215,12 @@ class LaneControl:
 		cri = 0
 		cra = range(-self.__color_offset,len(self.__car_rectangles)-self.__color_offset)
 		for i in range(self.__lane_size):
+			is_car_peg = False
 			state = lbs[i]
 			r = None
 			if state is True:
+				if cra[cri] is 0:
+					is_car_peg = True
 				r = self.__car_rectangles[cra[cri]]
 				cri += 1
 			else:
@@ -225,9 +230,15 @@ class LaneControl:
 			x = self.__car_size * i
 			xoffset = [0,1][i==0]
 			self.__animation_canvas.coords(r,
-				x, 1,
-				x + self.__car_size, self.__car_size
+				x + 3, 1 + 3,
+				x + self.__car_size + 3, self.__car_size + 3
 			)
+			
+			if is_car_peg is True:
+				self.__animation_canvas.coords(self.__car_peg,
+					x + 3 + 1, self.__car_size + 3 + 2,
+					x + self.__car_size + 3 - 1, 2 * self.__car_size + 3
+				)
 		self.__first_car_pos = lbs.index(True)
 	def __update_simulation_status(self,empty=False):
 		if empty:
