@@ -9,6 +9,8 @@ class Lane:
 		self.__cars = list()
 		self.__car_count = 0
 		self.__step_count = 0
+		self.__slowing_probability = p
+		self.__max_velocity = vmax
 	
 		# Parse initial_lane_conditions and build and preare the cars and 
 		# car array
@@ -94,3 +96,7 @@ class Lane:
 			vel_sum += c.get_velocity()
 		
 		return float(vel_sum) / self.__car_count
+	def get_slowing_probability(self):
+		return self.__slowing_probability
+	def get_max_velocity(self):
+		return self.__max_velocity

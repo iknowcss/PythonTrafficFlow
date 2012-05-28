@@ -46,3 +46,7 @@ class Lane:
 				vel_sum += 1
 				
 		return float(vel_sum) / self.__car_count
+	def get_slowing_probability(self):
+		return 0.0
+	def get_max_velocity(self):
+		return 1

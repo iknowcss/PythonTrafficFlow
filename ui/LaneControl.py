@@ -101,8 +101,8 @@ class LaneControl:
 		
 		# Speed
 		speed = StringVar()
-		speeds = ["1 ticks/sec","5 ticks/sec","10 ticks/sec"]
-		speed.set(speeds[-1])
+		speeds = ["1 ticks/sec","5 ticks/sec","10 ticks/sec","100 ticks/sec"]
+		speed.set(speeds[-2])
 		b = OptionMenu(pcframe,speed,*speeds,command=self.__set_animation_speed)
 		b.config(width=15,justify=RIGHT)
 		b.pack(side=LEFT)
@@ -130,6 +130,9 @@ class LaneControl:
 		lf.pack(fill=X,ipady=5)
 	def __rewind_animation(self):
 		self.__lane = self.__build_lane_object(self.__original_parameters)
+		self.__color_offset = 0
+		self.__first_car_pos = self.__lane.get_lane_bit_state().index(True)
+		self.__trip_steps = 0
 		self.__draw_bit_state()
 		self.__update_simulation_status(True)
 	def __set_animation_speed(self,speed_text):
@@ -167,6 +170,7 @@ class LaneControl:
 			self.__car_rectangles = []
 			self.__color_offset = 0
 			self.__first_car_pos = lbs.index(True)
+			self.__trip_steps = 0
 			
 			icolor = (
 				LaneControl.car_color_start[0],
@@ -209,8 +213,17 @@ class LaneControl:
 				else:
 					self.__blank_rectangles.append(r)
 		
+		looped = False
 		if self.__first_car_pos - lbs.index(True) > 0:
 			self.__color_offset = (self.__color_offset + 1) % self.__car_count
+			looped = True
+			
+		if looped and self.__color_offset is 0:
+			self.__last_trip_label.config(text=str(self.__trip_steps) + " steps")
+			self.__trip_steps = 0
+		else:
+			self.__trip_steps += 1
+			
 		bri = 0
 		cri = 0
 		cra = range(-self.__color_offset,len(self.__car_rectangles)-self.__color_offset)
@@ -246,8 +259,13 @@ class LaneControl:
 				(LaneControl.round_f % round(self.__lane_density,LaneControl.round_level)) +
 				" cars/space"
 			)
+			self.__slowing_prob_label.config(text=
+				"%3.1f%%" % (self.__lane.get_slowing_probability() * 100)
+			)
+			self.__max_vel_label.config(text=self.__lane.get_max_velocity())
 			self.__lane_avg_vel_label.config(text="[unknown]")
 			self.__lane_current_label.config(text="[unknown]")
+			self.__last_trip_label.config(text="[unknown]")
 		else:
 			vel = self.__lane.get_average_velocity()
 			current = vel * self.__lane_density
@@ -271,15 +289,30 @@ class LaneControl:
 		self.__lane_density_label = Label(lf)
 		self.__lane_density_label.grid(row=0,column=1,padx=10,sticky=W)
 		
+		# Slowing Prob
+		Label(lf,text="Slowing Prob:").grid(row=1,column=0,padx=10,sticky=W)
+		self.__slowing_prob_label = Label(lf)
+		self.__slowing_prob_label.grid(row=1,column=1,padx=10,sticky=W)
+		
+		# Max Velocity
+		Label(lf,text="Max Velocity:").grid(row=2,column=0,padx=10,sticky=W)
+		self.__max_vel_label = Label(lf)
+		self.__max_vel_label.grid(row=2,column=1,padx=10,sticky=W)
+		
 		# Average Velocity
-		Label(lf,text="Average Velocity:").grid(row=1,column=0,padx=10,sticky=W)
+		Label(lf,text="Average Velocity:").grid(row=3,column=0,padx=10,sticky=W)
 		self.__lane_avg_vel_label = Label(lf)
-		self.__lane_avg_vel_label.grid(row=1,column=1,padx=10,sticky=W)
+		self.__lane_avg_vel_label.grid(row=3,column=1,padx=10,sticky=W)
 		
 		# Current
-		Label(lf,text="Current:").grid(row=2,column=0,padx=10,sticky=W)
+		Label(lf,text="Current:").grid(row=4,column=0,padx=10,sticky=W)
 		self.__lane_current_label = Label(lf)
-		self.__lane_current_label.grid(row=2,column=1,padx=10,sticky=W)
+		self.__lane_current_label.grid(row=4,column=1,padx=10,sticky=W)
+		
+		# Last trip
+		Label(lf,text="Last trip:").grid(row=5,column=0,padx=10,sticky=W)
+		self.__last_trip_label = Label(lf)
+		self.__last_trip_label.grid(row=5,column=1,padx=10,sticky=W)
 		
 		lf.pack(fill=X,pady=5,ipadx=10)
 		

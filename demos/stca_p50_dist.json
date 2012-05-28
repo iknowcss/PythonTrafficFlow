@@ -1,0 +1,12 @@
+{
+	"simulationType": "STCA",
+	"maxVelocity": 1,
+	"slowingProbability": 0.00,
+	"initialConditions": [
+		false, true, false, true, false, true, false, true, false, true,
+		false, true, false, true, false, true, false, true, false, true,
+		false, true, false, true, false, true, false, true, false, true,
+		false, true, false, true, false, true, false, true, false, true,
+		false, true, false, true, false, true, false, true, false, true
+	]
+}
